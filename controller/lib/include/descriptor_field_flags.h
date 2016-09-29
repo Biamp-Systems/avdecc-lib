@@ -37,6 +37,8 @@ namespace avdecc_lib
 class descriptor_field_flags
 {
 public:
+	virtual ~descriptor_field_flags() { }
+
     ///
     /// \return The name of the flag.
     ///

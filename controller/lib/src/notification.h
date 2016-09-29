@@ -38,7 +38,7 @@ class notification
 public:
     notification();
 
-    ~notification();
+    virtual ~notification();
 
     ///
     /// AVDECC LIB modules call this function to generate a notification message.

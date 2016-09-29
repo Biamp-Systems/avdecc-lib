@@ -48,6 +48,8 @@ public:
         TYPE_FLAGS32
     };
 
+    virtual ~descriptor_field() { }
+
     ///
     /// \return The name of the descriptor field.
     ///

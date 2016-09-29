@@ -37,6 +37,9 @@ namespace avdecc_lib
 class net_interface
 {
 public:
+
+	virtual ~net_interface() { }
+
     ///
     /// Call destructor for Network Interface used for destroying objects
     ///

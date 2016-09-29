@@ -44,6 +44,8 @@ class configuration_descriptor;
 class controller
 {
 public:
+	virtual ~controller() { }
+
     ///
     /// Call destructor for Controller used for destroying objects
     ///

@@ -38,7 +38,7 @@ class notification_acmp
 public:
     notification_acmp();
 
-    ~notification_acmp();
+    virtual ~notification_acmp();
 
     ///
     /// AVDECC LIB modules call this function to generate an acmp notification message.

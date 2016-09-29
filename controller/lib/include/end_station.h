@@ -40,6 +40,9 @@ class descriptor_base;
 class end_station
 {
 public:
+
+	virtual ~end_station() { }
+
     ///
     /// \return The status of the End Station connection.
     ///	       'C' if connected. An End Station is connected after capturing an ADP packet with a different and unique Entity ID.

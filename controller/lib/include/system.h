@@ -46,6 +46,8 @@ public:
         // Add system types
     };
 
+    virtual ~system() { }
+
     ///
     /// Call destructor for System used for destroying objects
     ///
