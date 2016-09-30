@@ -41,9 +41,10 @@
 
 namespace avdecc_lib
 {
-aecp_controller_state_machine * aecp_controller_state_machine_ref = new aecp_controller_state_machine(); // To have one Controller State Machine for all end stations
 
-aecp_controller_state_machine::aecp_controller_state_machine()
+aecp_controller_state_machine::aecp_controller_state_machine(net_interface_imp * netif, notification_imp * notification_imp)
+: net_interface_ref(netif),
+  notification_imp_ref(notification_imp)
 {
     aecp_seq_id = 0;
 }

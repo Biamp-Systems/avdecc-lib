@@ -31,14 +31,32 @@
 
 #include "controller.h"
 
+#include <memory>
+
 namespace avdecc_lib
 {
+class aecp_controller_state_machine;
+class acmp_controller_state_machine;
+class adp_discovery_state_machine;
+class net_interface_imp;
+class notification_imp;
+class notification_acmp_imp;
 class end_stations;
 
 class controller_imp : public virtual controller
 {
 private:
-    end_stations * end_station_array;
+
+    system & m_system_ref;
+    net_interface_imp * net_interface_ref;
+
+    std::auto_ptr<notification_imp> notification_imp_ref;
+    std::auto_ptr<notification_acmp_imp> notification_acmp_imp_ref;
+    std::auto_ptr<aecp_controller_state_machine> aecp_controller_state_machine_ref;
+    std::auto_ptr<acmp_controller_state_machine> acmp_controller_state_machine_ref;
+    std::auto_ptr<adp_discovery_state_machine> adp_discovery_state_machine_ref;
+    std::auto_ptr<end_stations> end_station_array;
+
     uint32_t m_entity_capabilities_flags;
     uint32_t m_talker_capabilities_flags;
     uint32_t m_listener_capabilities_flags;
@@ -52,7 +70,8 @@ public:
     ///
     /// A constructor for controller_imp used for constructing an object with notification, and post_log_msg callback functions.
     ///
-    controller_imp(void (*notification_callback)(void *, int32_t, uint64_t, uint16_t, uint16_t, uint16_t, uint32_t, void *),
+    controller_imp(system & system_ref, net_interface_imp * netif,
+                   void (*notification_callback)(void *, int32_t, uint64_t, uint16_t, uint16_t, uint16_t, uint32_t, void *),
                    void (*acmp_notification_callback)(void *, int32_t, uint16_t, uint64_t, uint16_t, uint64_t,
                                                       uint16_t, uint32_t, void *),
                    void (*log_callback)(void *, int32_t, const char *, int32_t));
@@ -67,6 +86,11 @@ public:
     const char * STDCALL get_version() const;
     size_t STDCALL get_end_station_count();
     end_station * STDCALL get_end_station_by_index(size_t end_station_index);
+
+    aecp_controller_state_machine & get_aecp_controller_state_machine() { return *aecp_controller_state_machine_ref; }
+    acmp_controller_state_machine & get_acmp_controller_state_machine() { return *acmp_controller_state_machine_ref; }
+    adp_discovery_state_machine   & get_adp_discovery_state_machine()   { return *adp_discovery_state_machine_ref; }
+    notification_imp              & get_notification()                  { return *notification_imp_ref; }
 
     ///
     /// Check if the corresponding End Station with the Entity ID exists.
@@ -121,7 +145,9 @@ public:
     /// Process a CONTROLLER_AVAILABLE response for the CONTROLLER_AVAILABLE command.
     ///
     int proc_controller_avail_resp(void *& notification_id, const uint8_t * frame, size_t frame_len, int & status);
+
+    size_t STDCALL system_queue_tx(void * notification_id, uint32_t notification_flag, uint8_t * frame, size_t frame_len);
+
 };
 
-extern controller_imp * controller_imp_ref;
 }

@@ -40,11 +40,12 @@
 
 namespace avdecc_lib
 {
-adp_discovery_state_machine * adp_discovery_state_machine_ref = new adp_discovery_state_machine(); // To have one ADP Discovery State Machine for all end stations
 
-adp_discovery_state_machine::adp_discovery_state_machine()
+adp_discovery_state_machine::adp_discovery_state_machine(net_interface_imp * netif, notification_imp * notification_imp)
+: first_tick(true),
+  net_interface_ref(netif),
+  notification_imp_ref(notification_imp)
 {
-    first_tick = true;
 }
 
 adp_discovery_state_machine::~adp_discovery_state_machine() {}

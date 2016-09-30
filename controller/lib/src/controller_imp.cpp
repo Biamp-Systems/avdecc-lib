@@ -40,7 +40,7 @@
 #include "log_imp.h"
 #include "util.h"
 #include "adp.h"
-#include "system_tx_queue.h"
+#include "system.h"
 #include "end_station_imp.h"
 #include "adp_discovery_state_machine.h"
 #include "acmp_controller_state_machine.h"
@@ -49,8 +49,6 @@
 
 namespace avdecc_lib
 {
-net_interface_imp * net_interface_ref;
-controller_imp * controller_imp_ref;
 
 /*
 * The end_stations class is added here so that in the rare case that an endpoint is added by the background discovery
@@ -95,7 +93,8 @@ public:
     };
 };
 
-controller * STDCALL create_controller(net_interface * netif,
+controller * STDCALL create_controller(system & system_ref,
+                                       net_interface * netif,
                                        void (*notification_callback)(void *, int32_t, uint64_t,
                                                                      uint16_t, uint16_t, uint16_t,
                                                                      uint32_t, void *),
@@ -107,38 +106,37 @@ controller * STDCALL create_controller(net_interface * netif,
 {
     log_imp_ref->set_log_level(initial_log_level);
 
-    net_interface_ref = dynamic_cast<net_interface_imp *>(netif);
-
-    controller_imp_ref = new controller_imp(notification_callback, acmp_notification_callback, log_callback);
-
-    //Start up state machines if previously deleted on a restart
-    if (!aecp_controller_state_machine_ref)
-        aecp_controller_state_machine_ref = new aecp_controller_state_machine();
-
-    if (!acmp_controller_state_machine_ref)
-        acmp_controller_state_machine_ref = new acmp_controller_state_machine();
-
-    if (!adp_discovery_state_machine_ref)
-        adp_discovery_state_machine_ref = new adp_discovery_state_machine();
+    net_interface_imp *const net_interface_ref = dynamic_cast<net_interface_imp *>(netif);
 
     if (!net_interface_ref)
     {
         log_imp_ref->post_log_msg(LOGGING_LEVEL_ERROR, "Dynamic cast from base net_interface to derived net_interface_imp error");
+        return NULL;
     }
 
-    return controller_imp_ref;
+    return new controller_imp(system_ref, net_interface_ref, notification_callback, acmp_notification_callback, log_callback);
 }
 
-controller_imp::controller_imp(void (*notification_callback)(void *, int32_t, uint64_t, uint16_t,
+controller_imp::controller_imp(system & system_ref,
+                               net_interface_imp * netif,
+                               void (*notification_callback)(void *, int32_t, uint64_t, uint16_t,
                                                              uint16_t, uint16_t, uint32_t, void *),
                                void (*acmp_notification_callback)(void *, int32_t, uint16_t,
                                                                   uint64_t, uint16_t, uint64_t,
                                                                   uint16_t, uint32_t, void *),
                                void (*log_callback)(void *, int32_t, const char *, int32_t))
+: m_system_ref(system_ref),
+  net_interface_ref(netif),
+  notification_imp_ref(new notification_imp()),
+  notification_acmp_imp_ref(new notification_acmp_imp()),
+  aecp_controller_state_machine_ref(new aecp_controller_state_machine(net_interface_ref, notification_imp_ref.get())),
+  acmp_controller_state_machine_ref(new acmp_controller_state_machine(net_interface_ref, notification_acmp_imp_ref.get())),
+  adp_discovery_state_machine_ref(new adp_discovery_state_machine(net_interface_ref, notification_imp_ref.get())),
+  end_station_array(new end_stations())
 {
     notification_imp_ref->set_notification_callback(notification_callback, NULL);
     notification_acmp_imp_ref->set_acmp_notification_callback(acmp_notification_callback, NULL);
-    end_station_array = new end_stations();
+
     log_imp_ref->set_log_callback(log_callback, NULL);
 
     m_entity_capabilities_flags = 0x00000000;
@@ -148,14 +146,6 @@ controller_imp::controller_imp(void (*notification_callback)(void *, int32_t, ui
 
 controller_imp::~controller_imp()
 {
-    delete end_station_array;
-    end_station_array = NULL;
-    delete adp_discovery_state_machine_ref;
-    adp_discovery_state_machine_ref = NULL;
-    delete acmp_controller_state_machine_ref;
-    acmp_controller_state_machine_ref = NULL;
-    delete aecp_controller_state_machine_ref;
-    aecp_controller_state_machine_ref = NULL;
 }
 
 void STDCALL controller_imp::destroy()
@@ -313,18 +303,13 @@ void controller_imp::time_tick_event()
 {
     uint64_t end_station_entity_id;
     uint32_t disconnected_end_station_index;
-    if (aecp_controller_state_machine_ref)
-        aecp_controller_state_machine_ref->tick();
-    if (acmp_controller_state_machine_ref)
-        acmp_controller_state_machine_ref->tick();
+    aecp_controller_state_machine_ref->tick();
+    acmp_controller_state_machine_ref->tick();
 
-    if (adp_discovery_state_machine_ref)
+    if (adp_discovery_state_machine_ref->tick(end_station_entity_id) &&
+        is_end_station_found_by_entity_id(end_station_entity_id, disconnected_end_station_index))
     {
-        if (adp_discovery_state_machine_ref->tick(end_station_entity_id) &&
-            is_end_station_found_by_entity_id(end_station_entity_id, disconnected_end_station_index))
-        {
-            end_station_array->at(disconnected_end_station_index)->set_disconnected();
-        }
+        end_station_array->at(disconnected_end_station_index)->set_disconnected();
     }
 
     /* tick updates to background read of descriptors */
@@ -437,9 +422,8 @@ void controller_imp::rx_packet_event(void *& notification_id,
             {
                 if (!found_adp_in_end_station)
                 {
-                    if (adp_discovery_state_machine_ref)
-                        adp_discovery_state_machine_ref->state_avail(frame, frame_len);
-                    end_station_array->push_back(new end_station_imp(frame, frame_len));
+                    adp_discovery_state_machine_ref->state_avail(frame, frame_len);
+                    end_station_array->push_back(new end_station_imp(net_interface_ref, *this, frame, frame_len));
                     end_station_array->at(end_station_array->size() - 1)->set_connected();
                 }
                 else
@@ -456,13 +440,11 @@ void controller_imp::rx_packet_event(void *& notification_id,
                     if (end_station->get_connection_status() == 'D')
                     {
                         end_station->set_connected();
-                        if (adp_discovery_state_machine_ref)
-                            adp_discovery_state_machine_ref->state_avail(frame, frame_len);
+                        adp_discovery_state_machine_ref->state_avail(frame, frame_len);
                     }
                     else
                     {
-                        if (adp_discovery_state_machine_ref)
-                            adp_discovery_state_machine_ref->state_avail(frame, frame_len);
+                        adp_discovery_state_machine_ref->state_avail(frame, frame_len);
                     }
                 }
             }
@@ -588,19 +570,13 @@ void controller_imp::tx_packet_event(void * notification_id, uint32_t notificati
 
     if (subtype == JDKSAVDECC_SUBTYPE_AECP)
     {
-        if (aecp_controller_state_machine_ref)
-        {
-            aecp_controller_state_machine_ref->state_send_cmd(notification_id, notification_flag, &packet_frame);
-            memcpy(frame, packet_frame.payload, frame_len); // Get the updated frame with sequence id
-        }
+        aecp_controller_state_machine_ref->state_send_cmd(notification_id, notification_flag, &packet_frame);
+        memcpy(frame, packet_frame.payload, frame_len); // Get the updated frame with sequence id
     }
     else if (subtype == JDKSAVDECC_SUBTYPE_ACMP)
     {
-        if (acmp_controller_state_machine_ref)
-        {
-            acmp_controller_state_machine_ref->state_command(notification_id, notification_flag, &packet_frame);
-            memcpy(frame, packet_frame.payload, frame_len); // Get the updated frame with sequence id
-        }
+        acmp_controller_state_machine_ref->state_command(notification_id, notification_flag, &packet_frame);
+        memcpy(frame, packet_frame.payload, frame_len); // Get the updated frame with sequence id
     }
     else
     {
@@ -640,7 +616,7 @@ int STDCALL controller_imp::send_controller_avail_cmd(void * notification_id, ui
                                                        end_station_array->at(end_station_index)->entity_id(),
                                                        JDKSAVDECC_AEM_COMMAND_CONTROLLER_AVAILABLE_COMMAND_LEN -
                                                            JDKSAVDECC_COMMON_CONTROL_HEADER_LEN);
-    system_queue_tx(notification_id, CMD_WITH_NOTIFICATION, cmd_frame.payload, cmd_frame.length);
+    m_system_ref.queue_tx_frame(notification_id, CMD_WITH_NOTIFICATION, cmd_frame.payload, cmd_frame.length);
 
     return 0;
 }
@@ -722,4 +698,10 @@ int controller_imp::proc_controller_avail_resp(void *& notification_id, const ui
 
     return 0;
 }
+
+size_t STDCALL controller_imp::system_queue_tx(void * notification_id, uint32_t notification_flag, uint8_t * frame, size_t frame_len)
+{
+    return m_system_ref.queue_tx_frame(notification_id, notification_flag, frame, frame_len);
+}
+
 }

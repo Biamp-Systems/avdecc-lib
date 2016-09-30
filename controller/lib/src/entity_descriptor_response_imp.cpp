@@ -34,7 +34,7 @@
 #include "entity_descriptor_response_imp.h"
 #include "aecp_controller_state_machine.h"
 #include "adp.h"
-#include "system_tx_queue.h"
+#include "system.h"
 #include "util.h"
 
 namespace avdecc_lib

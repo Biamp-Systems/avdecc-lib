@@ -60,43 +60,22 @@
 #include "end_station_imp.h"
 #include "controller_imp.h"
 #include "system_message_queue.h"
-#include "system_tx_queue.h"
 #include "system_layer2_multithreaded_callback.h"
 
 namespace avdecc_lib
 {
 
-net_interface_imp * netif_obj_in_system;
-controller_imp * controller_ref_in_system;
-system_layer2_multithreaded_callback * local_system = NULL;
-
-system_layer2_multithreaded_callback * system_layer2_multithreaded_callback::instance = NULL;
-
-size_t system_queue_tx(void * notification_id, uint32_t notification_flag, uint8_t * frame, size_t mem_buf_len)
-{
-    if (local_system)
-    {
-        return local_system->queue_tx_frame(notification_id, notification_flag, frame, mem_buf_len);
-    }
-    else
-    {
-        return 0;
-    }
-}
-
-system * STDCALL create_system(system::system_type type, net_interface * netif, controller * controller_obj)
+system * STDCALL create_system(system::system_type type)
 {
     (void)type;
-    local_system = new system_layer2_multithreaded_callback(netif, controller_obj);
-
-    return local_system;
+    return new system_layer2_multithreaded_callback();
 }
 
-system_layer2_multithreaded_callback::system_layer2_multithreaded_callback(net_interface * netif, controller * controller_obj)
+system_layer2_multithreaded_callback::system_layer2_multithreaded_callback()
+: netif_obj_in_system(NULL),
+  controller_ref_in_system(NULL),
+  is_running(false)
 {
-    instance = this;
-    netif_obj_in_system = dynamic_cast<net_interface_imp *>(netif);
-    controller_ref_in_system = dynamic_cast<controller_imp *>(controller_obj);
     pipe(tx_pipe);
 
     wait_mgr = new cmd_wait_mgr();
@@ -118,15 +97,12 @@ system_layer2_multithreaded_callback::~system_layer2_multithreaded_callback()
 
 void STDCALL system_layer2_multithreaded_callback::destroy()
 {
-    if (this == local_system)
-    {
-        local_system = NULL;
+    is_running = false;
 
-        // Wait for controller to have finished
-        if (sem_wait(shutdown_sem) != 0)
-        {
-            perror("sem_wait");
-        }
+    // Wait for controller to have finished
+    if (sem_wait(shutdown_sem) != 0)
+    {
+        perror("sem_wait");
     }
 
     delete this;
@@ -200,15 +176,15 @@ int system_layer2_multithreaded_callback::timer_start_interval(int timerfd)
 
 int system_layer2_multithreaded_callback::fn_timer_cb(struct epoll_priv * priv)
 {
-    return instance->fn_timer(priv);
+    return priv->instance->fn_timer(priv);
 }
 int system_layer2_multithreaded_callback::fn_netif_cb(struct epoll_priv * priv)
 {
-    return instance->fn_netif(priv);
+    return priv->instance->fn_netif(priv);
 }
 int system_layer2_multithreaded_callback::fn_tx_cb(struct epoll_priv * priv)
 {
-    return instance->fn_tx(priv);
+    return priv->instance->fn_tx(priv);
 }
 
 int system_layer2_multithreaded_callback::fn_timer(struct epoll_priv * priv)
@@ -309,6 +285,7 @@ int system_layer2_multithreaded_callback::prep_evt_desc(
     struct epoll_priv * priv,
     struct epoll_event * ev)
 {
+    priv->instance = this;
     priv->fd = fd;
     priv->fn = fn;
     ev->events = EPOLLIN;
@@ -344,7 +321,7 @@ int system_layer2_multithreaded_callback::proc_poll_loop()
         struct epoll_priv * priv;
         res = epoll_wait(epollfd, epoll_evt, POLL_COUNT, -1);
 
-        if (local_system == NULL)
+        if (!is_running)
         {
             // System has been shut down
             sem_post(shutdown_sem);
@@ -372,8 +349,17 @@ void * system_layer2_multithreaded_callback::thread_fn(void * param)
     return 0;
 }
 
-int STDCALL system_layer2_multithreaded_callback::process_start()
+int STDCALL system_layer2_multithreaded_callback::process_start(net_interface * netif, controller * controller_obj)
 {
+    netif_obj_in_system = dynamic_cast<net_interface_imp *>(netif);
+    controller_ref_in_system = dynamic_cast<controller_imp *>(controller_obj);
+
+    if (!controller_ref_in_system)
+    {
+        log_imp_ref->post_log_msg(LOGGING_LEVEL_ERROR, "Dynamic cast from base controller to derived controller_imp error");
+    }
+
+
     int rc;
 
     rc = pthread_create(&h_thread, NULL, &system_layer2_multithreaded_callback::thread_fn, (void *)this);
@@ -382,6 +368,9 @@ int STDCALL system_layer2_multithreaded_callback::process_start()
         printf("ERROR; return code from pthread_create() is %d\n", rc);
         exit(-1);
     }
+
+    is_running = true;
+
     return 0;
 }
 

@@ -33,6 +33,8 @@
 
 namespace avdecc_lib
 {
+class net_interface_imp;
+
 class adp
 {
 private:
@@ -43,11 +45,13 @@ private:
     ssize_t adpdu_read_returned;       // Status of extracting ADPDU information from a network buffer
     int proc_adpdu_returned;           //result of ADP update
 
+    net_interface_imp * net_interface_ref;
+
 public:
     ///
     /// Constructor for ADP used for constructing an object with a base pointer and memory buffer length.
     ///
-    adp(const uint8_t * frame, size_t frame_len);
+    adp(net_interface_imp * netif, const uint8_t * frame, size_t frame_len);
 
     ~adp();
     ///
@@ -82,7 +86,7 @@ public:
     ///
     /// Get the Controller Entity ID of the AVDECC Entity sending the command.
     ///
-    static struct jdksavdecc_eui64 get_controller_entity_id();
+    struct jdksavdecc_eui64 get_controller_entity_id();
 
     ///
     /// Get the header field of the ADP object.

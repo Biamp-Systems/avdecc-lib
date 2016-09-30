@@ -35,7 +35,7 @@
 #include "log_imp.h"
 #include "adp.h"
 #include "end_station_imp.h"
-#include "system_tx_queue.h"
+#include "system.h"
 #include "aecp_controller_state_machine.h"
 #include "audio_unit_descriptor_imp.h"
 
@@ -77,7 +77,7 @@ int STDCALL audio_unit_descriptor_imp::send_set_sampling_rate_cmd(void * notific
     aem_cmd_set_sampling_rate.sampling_rate = new_sampling_rate;
 
     /******************************** Fill frame payload with AECP data and send the frame ***************************/
-    aecp_controller_state_machine_ref->ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
                                                         ETHER_HDR_SIZE + JDKSAVDECC_AEM_COMMAND_SET_SAMPLING_RATE_COMMAND_LEN);
     aem_cmd_set_sampling_rate_returned = jdksavdecc_aem_command_set_sampling_rate_write(&aem_cmd_set_sampling_rate,
                                                                                         cmd_frame.payload,
@@ -91,7 +91,7 @@ int STDCALL audio_unit_descriptor_imp::send_set_sampling_rate_cmd(void * notific
         return -1;
     }
 
-    aecp_controller_state_machine_ref->common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
                                                        &cmd_frame,
                                                        base_end_station_imp_ref->entity_id(),
                                                        JDKSAVDECC_AEM_COMMAND_SET_SAMPLING_RATE_COMMAND_LEN -
@@ -138,7 +138,7 @@ int audio_unit_descriptor_imp::proc_set_sampling_rate_resp(void *& notification_
         free(buffer);
     }
 
-    aecp_controller_state_machine_ref->update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
+    base_end_station_imp_ref->get_aecp_controller_state_machine().update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
 
     return 0;
 }
@@ -160,7 +160,7 @@ int STDCALL audio_unit_descriptor_imp::send_get_sampling_rate_cmd(void * notific
     aem_cmd_get_sampling_rate.descriptor_index = descriptor_index();
 
     /******************************* Fill frame payload with AECP data and send the frame **************************/
-    aecp_controller_state_machine_ref->ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
                                                         ETHER_HDR_SIZE + JDKSAVDECC_AEM_COMMAND_GET_SAMPLING_RATE_COMMAND_LEN);
     aem_cmd_get_sampling_rate_returned = jdksavdecc_aem_command_get_sampling_rate_write(&aem_cmd_get_sampling_rate,
                                                                                         cmd_frame.payload,
@@ -174,7 +174,7 @@ int STDCALL audio_unit_descriptor_imp::send_get_sampling_rate_cmd(void * notific
         return -1;
     }
 
-    aecp_controller_state_machine_ref->common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
                                                        &cmd_frame,
                                                        base_end_station_imp_ref->entity_id(),
                                                        JDKSAVDECC_AEM_COMMAND_GET_SAMPLING_RATE_COMMAND_LEN -
@@ -212,7 +212,7 @@ int audio_unit_descriptor_imp::proc_get_sampling_rate_resp(void *& notification_
     status = aem_cmd_get_sampling_rate_resp.aem_header.aecpdu_header.header.status;
     u_field = aem_cmd_get_sampling_rate_resp.aem_header.command_type >> 15 & 0x01; // u_field = the msb of the uint16_t command_type
 
-    aecp_controller_state_machine_ref->update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
+    base_end_station_imp_ref->get_aecp_controller_state_machine().update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
 
     return 0;
 }

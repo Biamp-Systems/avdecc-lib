@@ -42,9 +42,10 @@
 
 namespace avdecc_lib
 {
-acmp_controller_state_machine * acmp_controller_state_machine_ref = new acmp_controller_state_machine();
 
-acmp_controller_state_machine::acmp_controller_state_machine()
+acmp_controller_state_machine::acmp_controller_state_machine(net_interface_imp * netif, notification_acmp_imp * notification_acmp_imp)
+: net_interface_ref(netif),
+  notification_acmp_imp_ref(notification_acmp_imp)
 {
     acmp_seq_id = 0;
 }

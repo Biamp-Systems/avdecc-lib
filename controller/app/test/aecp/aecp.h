@@ -37,6 +37,7 @@
 namespace avdecc_lib
 {
     class end_station;
+    class net_interface_imp;
 
     class aecp
     {
@@ -44,13 +45,14 @@ namespace avdecc_lib
         struct jdksavdecc_aecpdu_aem aecpdu; // Structure containing the AECPDU fields
         uint8_t *aecp_frame; // Point to a raw memory buffer to read from
         int aecpdu_aem_read_returned; // Status of extracting AECPDU information from a network buffer
+        net_interface_imp * net_interface_ref;
 
     public:
         /**
          * Constructor for aecp used for constructing an object with a base pointer, position offest,
          * and memory buffer length.
          */
-        aecp(uint8_t *frame, size_t pos, size_t frame_len);
+        aecp(net_interface_imp * netif, uint8_t *frame, size_t pos, size_t frame_len);
 
         ~aecp();
 

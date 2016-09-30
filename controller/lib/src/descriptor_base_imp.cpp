@@ -35,7 +35,7 @@
 #include "log_imp.h"
 #include "adp.h"
 #include "end_station_imp.h"
-#include "system_tx_queue.h"
+#include "system.h"
 #include "aecp_controller_state_machine.h"
 #include "descriptor_base_imp.h"
 
@@ -169,7 +169,7 @@ int descriptor_base_imp::default_send_acquire_entity_cmd(descriptor_base_imp * d
     aem_cmd_acquire_entity.descriptor_index = desc_base_imp_ref->descriptor_index();
 
     /**************************** Fill frame payload with AECP data and send the frame **********************/
-    aecp_controller_state_machine_ref->ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
                                                         ETHER_HDR_SIZE + JDKSAVDECC_AEM_COMMAND_ACQUIRE_ENTITY_COMMAND_LEN);
     aem_cmd_acquire_entity_returned = jdksavdecc_aem_command_acquire_entity_write(&aem_cmd_acquire_entity,
                                                                                   cmd_frame.payload,
@@ -183,7 +183,7 @@ int descriptor_base_imp::default_send_acquire_entity_cmd(descriptor_base_imp * d
         return -1;
     }
 
-    aecp_controller_state_machine_ref->common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
                                                        &cmd_frame,
                                                        base_end_station_imp_ref->entity_id(),
                                                        JDKSAVDECC_AEM_COMMAND_ACQUIRE_ENTITY_COMMAND_LEN -
@@ -222,7 +222,7 @@ int descriptor_base_imp::default_proc_acquire_entity_resp(struct jdksavdecc_aem_
     status = aem_cmd_acquire_entity_resp.aem_header.aecpdu_header.header.status;
     u_field = aem_cmd_acquire_entity_resp.aem_header.command_type >> 15 & 0x01; // u_field = the msb of the uint16_t command_type
 
-    aecp_controller_state_machine_ref->update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
+    base_end_station_imp_ref->get_aecp_controller_state_machine().update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
 
     return 0;
 }
@@ -267,7 +267,7 @@ int descriptor_base_imp::default_send_lock_entity_cmd(descriptor_base_imp * desc
     aem_cmd_lock_entity.descriptor_index = descriptor_base_imp_ref->descriptor_index();
 
     /**************************** Fill frame payload with AECP data and send the frame **********************/
-    aecp_controller_state_machine_ref->ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
                                                         ETHER_HDR_SIZE + JDKSAVDECC_AEM_COMMAND_LOCK_ENTITY_COMMAND_LEN);
     aem_cmd_lock_entity_returned = jdksavdecc_aem_command_lock_entity_write(&aem_cmd_lock_entity,
                                                                             cmd_frame.payload,
@@ -281,7 +281,7 @@ int descriptor_base_imp::default_send_lock_entity_cmd(descriptor_base_imp * desc
         return -1;
     }
 
-    aecp_controller_state_machine_ref->common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
                                                        &cmd_frame,
                                                        base_end_station_imp_ref->entity_id(),
                                                        JDKSAVDECC_AEM_COMMAND_LOCK_ENTITY_COMMAND_LEN -
@@ -320,7 +320,7 @@ int descriptor_base_imp::default_proc_lock_entity_resp(struct jdksavdecc_aem_com
     status = aem_cmd_lock_entity_resp.aem_header.aecpdu_header.header.status;
     u_field = aem_cmd_lock_entity_resp.aem_header.command_type >> 15 & 0x01; // u_field = the msb of the uint16_t command_type
 
-    aecp_controller_state_machine_ref->update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
+    base_end_station_imp_ref->get_aecp_controller_state_machine().update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
 
     return 0;
 }
@@ -362,7 +362,7 @@ int descriptor_base_imp::default_send_reboot_cmd(descriptor_base_imp * descripto
     aem_cmd_reboot.descriptor_index = descriptor_base_imp_ref->descriptor_index();
 
     /**************************** Fill frame payload with AECP data and send the frame **********************/
-    aecp_controller_state_machine_ref->ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
                                                         ETHER_HDR_SIZE + JDKSAVDECC_AEM_COMMAND_REBOOT_COMMAND_LEN);
     ssize_t aem_cmd_reboot_entity_returned = jdksavdecc_aem_command_reboot_write(&aem_cmd_reboot,
                                                                                  cmd_frame.payload,
@@ -376,7 +376,7 @@ int descriptor_base_imp::default_send_reboot_cmd(descriptor_base_imp * descripto
         return -1;
     }
 
-    aecp_controller_state_machine_ref->common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
                                                        &cmd_frame,
                                                        base_end_station_imp_ref->entity_id(),
                                                        JDKSAVDECC_AEM_COMMAND_REBOOT_COMMAND_LEN -
@@ -413,7 +413,7 @@ int descriptor_base_imp::default_proc_reboot_resp(struct jdksavdecc_aem_command_
     status = aem_cmd_reboot_resp.aem_header.aecpdu_header.header.status;
     u_field = aem_cmd_reboot_resp.aem_header.command_type >> 15 & 0x01; // u_field = the msb of the uint16_t command_type
 
-    aecp_controller_state_machine_ref->update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
+    base_end_station_imp_ref->get_aecp_controller_state_machine().update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
 
     return 0;
 }
@@ -448,7 +448,7 @@ int descriptor_base_imp::default_send_set_name_cmd(descriptor_base_imp * desc_ba
     memcpy(aem_cmd_set_name.name.value, name->value, sizeof(aem_cmd_set_name.name.value));
 
     /**************************** Fill frame payload with AECP data and send the frame **********************/
-    aecp_controller_state_machine_ref->ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
                                                         ETHER_HDR_SIZE + JDKSAVDECC_AEM_COMMAND_SET_NAME_COMMAND_LEN);
     aem_cmd_set_name_returned = jdksavdecc_aem_command_set_name_write(&aem_cmd_set_name,
                                                                       cmd_frame.payload,
@@ -462,7 +462,7 @@ int descriptor_base_imp::default_send_set_name_cmd(descriptor_base_imp * desc_ba
         return -1;
     }
 
-    aecp_controller_state_machine_ref->common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
                                                        &cmd_frame,
                                                        base_end_station_imp_ref->entity_id(),
                                                        JDKSAVDECC_AEM_COMMAND_SET_NAME_COMMAND_LEN -
@@ -536,7 +536,7 @@ int descriptor_base_imp::default_proc_set_name_resp(struct jdksavdecc_aem_comman
         free(buffer);
     }
 
-    aecp_controller_state_machine_ref->update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
+    base_end_station_imp_ref->get_aecp_controller_state_machine().update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
 
     return 0;
 }
@@ -559,7 +559,7 @@ int descriptor_base_imp::default_send_get_name_cmd(descriptor_base_imp * desc_ba
     aem_cmd_get_name.name_index = name_index;
 
     /**************************** Fill frame payload with AECP data and send the frame **********************/
-    aecp_controller_state_machine_ref->ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
                                                         ETHER_HDR_SIZE + JDKSAVDECC_AEM_COMMAND_GET_NAME_COMMAND_LEN);
     aem_cmd_get_name_returned = jdksavdecc_aem_command_get_name_write(&aem_cmd_get_name,
                                                                       cmd_frame.payload,
@@ -573,7 +573,7 @@ int descriptor_base_imp::default_send_get_name_cmd(descriptor_base_imp * desc_ba
         return -1;
     }
 
-    aecp_controller_state_machine_ref->common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
                                                        &cmd_frame,
                                                        base_end_station_imp_ref->entity_id(),
                                                        JDKSAVDECC_AEM_COMMAND_GET_NAME_COMMAND_LEN -
@@ -613,7 +613,7 @@ int descriptor_base_imp::default_proc_get_name_resp(struct jdksavdecc_aem_comman
     status = aem_cmd_get_name_resp.aem_header.aecpdu_header.header.status;
     u_field = aem_cmd_get_name_resp.aem_header.command_type >> 15 & 0x01; // u_field = the msb of the uint16_t command_type
 
-    aecp_controller_state_machine_ref->update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
+    base_end_station_imp_ref->get_aecp_controller_state_machine().update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
 
     return 0;
 }
@@ -629,4 +629,10 @@ int descriptor_base_imp::proc_get_name_resp(void *& notification_id, const uint8
     memset(&aem_cmd_get_name_resp, 0, sizeof(jdksavdecc_aem_command_get_name_response));
     return default_proc_get_name_resp(aem_cmd_get_name_resp, notification_id, frame, frame_len, status);
 }
+
+size_t STDCALL descriptor_base_imp::system_queue_tx(void * notification_id, uint32_t notification_flag, uint8_t * frame, size_t frame_len)
+{
+    return base_end_station_imp_ref->system_queue_tx(notification_id, notification_flag, frame, frame_len);
+}
+
 }

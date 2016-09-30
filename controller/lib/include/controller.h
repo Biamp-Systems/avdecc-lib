@@ -34,12 +34,12 @@
 #include "avdecc-lib_build.h"
 #include "net_interface.h"
 
-class net_interface;
-
 namespace avdecc_lib
 {
+class system;
 class end_station;
 class configuration_descriptor;
+class net_interface;
 
 class controller
 {
@@ -138,7 +138,8 @@ public:
 /// \param log_msg A message containing additional information to be logged.
 /// \param time_stamp_ms The time in milliseconds indicating when the message is logged.
 ///
-extern "C" AVDECC_CONTROLLER_LIB32_API controller * STDCALL create_controller(net_interface * netif,
+extern "C" AVDECC_CONTROLLER_LIB32_API controller * STDCALL create_controller(system & system_ref,
+                                                                              net_interface * netif,
                                                                               void (*notification_callback)(void * notification_user_obj,
                                                                                                             int32_t notification_type, uint64_t entity_id,
                                                                                                             uint16_t cmd_type, uint16_t desc_type,

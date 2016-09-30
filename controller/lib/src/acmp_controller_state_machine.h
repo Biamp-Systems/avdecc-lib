@@ -32,15 +32,18 @@
 namespace avdecc_lib
 {
 class inflight;
+class notification_acmp_imp;
 
 class acmp_controller_state_machine
 {
 private:
     uint16_t acmp_seq_id; // The sequence id used for identifying the ACMP command that a response is for
     std::vector<inflight> inflight_cmds;
+    net_interface_imp * net_interface_ref;
+    notification_acmp_imp * notification_acmp_imp_ref;
 
 public:
-    acmp_controller_state_machine();
+    acmp_controller_state_machine(net_interface_imp * netif, notification_acmp_imp * notification_acmp_imp);
 
     ~acmp_controller_state_machine();
     ///
@@ -95,5 +98,4 @@ private:
     int callback(void * notification_id, uint32_t notification_flag, uint8_t * frame);
 };
 
-extern acmp_controller_state_machine * acmp_controller_state_machine_ref;
 }

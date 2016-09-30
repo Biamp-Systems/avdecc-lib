@@ -122,5 +122,4 @@ public:
     int get_fd();
 };
 
-extern net_interface_imp * net_interface_ref;
 }

@@ -36,6 +36,8 @@
 namespace avdecc_lib
 {
 class inflight;
+class net_interface_imp;
+class notification_imp;
 
 class aecp_controller_state_machine
 {
@@ -43,9 +45,11 @@ private:
     uint16_t aecp_seq_id; // The sequence id used for identifying the AECP command that a response is for
     std::vector<inflight> inflight_cmds;
     std::vector<operation> active_operations;
+    net_interface_imp * net_interface_ref;
+    notification_imp * notification_imp_ref;
 
 public:
-    aecp_controller_state_machine();
+    aecp_controller_state_machine(net_interface_imp * netif, notification_imp * notification_imp);
 
     ~aecp_controller_state_machine();
     ///
@@ -120,6 +124,4 @@ private:
     ///
     int callback(void * notification_id, uint32_t notification_flag, uint8_t * frame);
 };
-
-extern aecp_controller_state_machine * aecp_controller_state_machine_ref;
 }

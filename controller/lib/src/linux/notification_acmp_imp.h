@@ -71,5 +71,4 @@ public:
     void post_acmp_notification_event();
 };
 
-extern notification_acmp_imp * notification_acmp_imp_ref;
 }

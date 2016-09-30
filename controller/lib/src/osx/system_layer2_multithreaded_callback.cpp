@@ -58,7 +58,6 @@
 #include "end_station_imp.h"
 #include "controller_imp.h"
 #include "system_message_queue.h"
-#include "system_tx_queue.h"
 #include "system_layer2_multithreaded_callback.h"
 
 namespace avdecc_lib
@@ -82,7 +81,7 @@ size_t system_queue_tx(void * notification_id, uint32_t notification_flag, uint8
     }
 }
 
-system * STDCALL create_system(system::system_type type, net_interface * netif, controller * controller_obj)
+system * STDCALL create_system(system::system_type type)
 {
     (void)type;
     local_system = new system_layer2_multithreaded_callback(netif, controller_obj);

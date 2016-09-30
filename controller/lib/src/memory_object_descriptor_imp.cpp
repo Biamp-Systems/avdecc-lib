@@ -35,7 +35,7 @@
 #include "end_station_imp.h"
 #include "adp.h"
 #include "end_station_imp.h"
-#include "system_tx_queue.h"
+#include "system.h"
 #include "acmp_controller_state_machine.h"
 #include "aecp_controller_state_machine.h"
 #include "memory_object_descriptor_imp.h"
@@ -73,7 +73,7 @@ int STDCALL memory_object_descriptor_imp::start_operation_cmd(void * notificatio
     aem_cmd_start_operation.operation_id = 0;
     aem_cmd_start_operation.operation_type = operation_type;
 
-    aecp_controller_state_machine_ref->ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
                                                         ETHER_HDR_SIZE + JDKSAVDECC_AEM_COMMAND_START_OPERATION_COMMAND_LEN);
     ssize_t aem_cmd_start_operation_returned = jdksavdecc_aem_command_start_operation_write(&aem_cmd_start_operation,
                                                                                             cmd_frame.payload,
@@ -86,7 +86,7 @@ int STDCALL memory_object_descriptor_imp::start_operation_cmd(void * notificatio
         return -1;
     }
 
-    aecp_controller_state_machine_ref->common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
                                                        &cmd_frame,
                                                        base_end_station_imp_ref->entity_id(),
                                                        JDKSAVDECC_AEM_COMMAND_START_OPERATION_COMMAND_LEN -
@@ -126,7 +126,7 @@ int memory_object_descriptor_imp::proc_start_operation_resp(void *& notification
     operation_id = aem_cmd_start_operation_resp.operation_id;
     operation_type = aem_cmd_start_operation_resp.operation_type;
 
-    aecp_controller_state_machine_ref->update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
+    base_end_station_imp_ref->get_aecp_controller_state_machine().update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
 
     return 0;
 }
@@ -163,8 +163,8 @@ int memory_object_descriptor_imp::proc_operation_status_resp(void *& notificatio
     if (operation_id)
         is_operation_id_valid = true;
 
-    aecp_controller_state_machine_ref->update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
-    aecp_controller_state_machine_ref->update_operation_for_rcvd_resp(notification_id, operation_id, percent_complete, &cmd_frame);
+    base_end_station_imp_ref->get_aecp_controller_state_machine().update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
+    base_end_station_imp_ref->get_aecp_controller_state_machine().update_operation_for_rcvd_resp(notification_id, operation_id, percent_complete, &cmd_frame);
 
     return 0;
 }

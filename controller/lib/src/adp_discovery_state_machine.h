@@ -33,6 +33,9 @@
 
 namespace avdecc_lib
 {
+class net_interface_imp;
+class notification_imp;
+
 class adp_discovery_state_machine
 {
 private:
@@ -44,9 +47,11 @@ private:
 
     bool first_tick;
     std::vector<struct entities> entities_vec;
+    net_interface_imp * net_interface_ref;
+    notification_imp * notification_imp_ref;
 
 public:
-    adp_discovery_state_machine();
+    adp_discovery_state_machine(net_interface_imp * netif, notification_imp * notification_imp);
 
     ~adp_discovery_state_machine();
     ///
@@ -117,5 +122,4 @@ private:
     int state_timeout(uint32_t entity_index);
 };
 
-extern adp_discovery_state_machine * adp_discovery_state_machine_ref;
 }

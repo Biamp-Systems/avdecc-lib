@@ -32,7 +32,6 @@
 
 namespace avdecc_lib
 {
-notification_imp * notification_imp_ref = new notification_imp();
 
 notification_imp::notification_imp()
 {

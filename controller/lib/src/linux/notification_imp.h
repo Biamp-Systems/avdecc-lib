@@ -71,5 +71,4 @@ public:
     void post_notification_event();
 };
 
-extern notification_imp * notification_imp_ref;
 }

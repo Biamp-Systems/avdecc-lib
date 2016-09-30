@@ -33,7 +33,7 @@
 #include "enumeration.h"
 #include "log_imp.h"
 #include "adp.h"
-#include "system_tx_queue.h"
+#include "system.h"
 #include "aecp_controller_state_machine.h"
 #include "end_station_imp.h"
 #include "stream_port_input_descriptor_imp.h"
@@ -111,7 +111,7 @@ int STDCALL stream_port_input_descriptor_imp::send_get_audio_map_cmd(void * noti
     aem_cmd_get_audio_map.map_index = mapping_index;
 
     /******************************* Fill frame payload with AECP data and send the frame **************************/
-    aecp_controller_state_machine_ref->ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
                                                         ETHER_HDR_SIZE + JDKSAVDECC_AEM_COMMAND_GET_AUDIO_MAP_COMMAND_LEN);
     aem_cmd_get_audio_map_returned = jdksavdecc_aem_command_get_audio_map_write(&aem_cmd_get_audio_map,
                                                                                 cmd_frame.payload,
@@ -124,7 +124,7 @@ int STDCALL stream_port_input_descriptor_imp::send_get_audio_map_cmd(void * noti
         return -1;
     }
 
-    aecp_controller_state_machine_ref->common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
                                                        &cmd_frame,
                                                        base_end_station_imp_ref->entity_id(),
                                                        JDKSAVDECC_AEM_COMMAND_GET_AUDIO_MAP_COMMAND_LEN -
@@ -163,7 +163,7 @@ int stream_port_input_descriptor_imp::proc_get_audio_map_resp(void *& notificati
     status = aem_cmd_get_audio_map_resp.aem_header.aecpdu_header.header.status;
     u_field = aem_cmd_get_audio_map_resp.aem_header.command_type >> 15 & 0x01; // u_field = the msb of the uint16_t command_type
 
-    aecp_controller_state_machine_ref->update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
+    base_end_station_imp_ref->get_aecp_controller_state_machine().update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
 
     return 0;
 }
@@ -194,7 +194,7 @@ int STDCALL stream_port_input_descriptor_imp::send_add_audio_mappings_cmd(void *
     }
 
     /******************************* Fill frame payload with AECP data and send the frame **************************/
-    aecp_controller_state_machine_ref->ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
                                                         ETHER_HDR_SIZE + JDKSAVDECC_AEM_COMMAND_ADD_AUDIO_MAPPINGS_COMMAND_LEN +
                                                             (uint16_t)pending_maps.size() * JDKSAVDECC_AUDIO_MAPPING_LEN);
     aem_cmd_add_audio_mappings_returned = jdksavdecc_aem_command_add_audio_mappings_write(&aem_cmd_add_audio_mappings,
@@ -235,7 +235,7 @@ int STDCALL stream_port_input_descriptor_imp::send_add_audio_mappings_cmd(void *
         i++;
     }
 
-    aecp_controller_state_machine_ref->common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
                                                        &cmd_frame,
                                                        base_end_station_imp_ref->entity_id(),
                                                        JDKSAVDECC_AEM_COMMAND_ADD_AUDIO_MAPPINGS_COMMAND_LEN -
@@ -279,7 +279,7 @@ int stream_port_input_descriptor_imp::proc_add_audio_mappings_resp(void *& notif
     status = aem_cmd_add_audio_mappings_resp.aem_header.aecpdu_header.header.status;
     u_field = aem_cmd_add_audio_mappings_resp.aem_header.command_type >> 15 & 0x01; // u_field = the msb of the uint16_t command_type
 
-    aecp_controller_state_machine_ref->update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
+    base_end_station_imp_ref->get_aecp_controller_state_machine().update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
 
     return 0;
 }
@@ -310,7 +310,7 @@ int STDCALL stream_port_input_descriptor_imp::send_remove_audio_mappings_cmd(voi
     }
 
     /******************************* Fill frame payload with AECP data and send the frame **************************/
-    aecp_controller_state_machine_ref->ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
                                                         ETHER_HDR_SIZE + JDKSAVDECC_AEM_COMMAND_REMOVE_AUDIO_MAPPINGS_COMMAND_LEN +
                                                             (uint16_t)pending_maps.size() * JDKSAVDECC_AUDIO_MAPPING_LEN);
     aem_cmd_remove_audio_mappings_returned = jdksavdecc_aem_command_remove_audio_mappings_write(&aem_cmd_remove_audio_mappings,
@@ -351,7 +351,7 @@ int STDCALL stream_port_input_descriptor_imp::send_remove_audio_mappings_cmd(voi
         i++;
     }
 
-    aecp_controller_state_machine_ref->common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
                                                        &cmd_frame,
                                                        base_end_station_imp_ref->entity_id(),
                                                        JDKSAVDECC_AEM_COMMAND_REMOVE_AUDIO_MAPPINGS_COMMAND_LEN -
@@ -395,7 +395,7 @@ int stream_port_input_descriptor_imp::proc_remove_audio_mappings_resp(void *& no
     status = aem_cmd_remove_audio_mappings_resp.aem_header.aecpdu_header.header.status;
     u_field = aem_cmd_remove_audio_mappings_resp.aem_header.command_type >> 15 & 0x01; // u_field = the msb of the uint16_t command_type
 
-    aecp_controller_state_machine_ref->update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
+    base_end_station_imp_ref->get_aecp_controller_state_machine().update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
 
     return 0;
 }

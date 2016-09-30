@@ -35,6 +35,12 @@
 
 namespace avdecc_lib
 {
+struct epoll_priv;
+
+class net_interface_imp;
+class controller_imp;
+
+
 class system_layer2_multithreaded_callback : public virtual system
 {
 private:
@@ -81,12 +87,15 @@ private:
     int resp_status_for_cmd;
     timer tick_timer; // A tick timer that is always running
 
+    net_interface_imp * netif_obj_in_system;
+    controller_imp * controller_obj_in_system;
+
 public:
     ///
     /// A constructor for system_layer2_multithreaded_callback used for constructing an object with network
     /// interface, notification, and post_log_msg callback functions.
     ///
-    system_layer2_multithreaded_callback(net_interface * netif, controller * controller_obj);
+    system_layer2_multithreaded_callback();
 
     virtual ~system_layer2_multithreaded_callback();
 
@@ -98,7 +107,7 @@ public:
     ///
     /// Store the frame to be sent in a queue.
     ///
-    int queue_tx_frame(void * notification_id, uint32_t notification_flag, uint8_t * frame, size_t frame_len);
+    int STDCALL queue_tx_frame(void * notification_id, uint32_t notification_flag, uint8_t * frame, size_t mem_buf_len);
 
     ///
     /// Set a waiting flag for the next command sent.
@@ -113,7 +122,7 @@ public:
     ///
     /// Start point of the system process, which calls the thread initialization function.
     ///
-    int STDCALL process_start();
+    int STDCALL process_start(net_interface * netif, controller * controller_obj);
 
     ///
     /// End point of the system process, which terminates the threads.

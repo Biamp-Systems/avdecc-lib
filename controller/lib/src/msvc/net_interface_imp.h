@@ -101,5 +101,4 @@ public:
     int send_frame(uint8_t * frame, size_t frame_len);
 };
 
-extern net_interface_imp * net_interface_ref;
 }

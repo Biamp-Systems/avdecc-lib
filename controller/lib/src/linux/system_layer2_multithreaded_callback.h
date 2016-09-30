@@ -39,6 +39,10 @@ namespace avdecc_lib
 {
 struct epoll_priv;
 
+class net_interface_imp;
+class controller_imp;
+
+
 class system_layer2_multithreaded_callback : public virtual system
 {
 public:
@@ -46,7 +50,7 @@ public:
     /// A constructor for system_layer2_multithreaded_callback used for constructing an object with network
     /// interface, notification, and logging callback functions.
     ///
-    system_layer2_multithreaded_callback(net_interface * netif, controller * controller_obj);
+    system_layer2_multithreaded_callback();
 
     ///
     /// Destructor for system_layer2_multithreaded_callback used for destroying objects
@@ -61,7 +65,7 @@ public:
     ///
     /// Store the frame to be sent in a queue.
     ///
-    int queue_tx_frame(void * notification_id, uint32_t notification_flag, uint8_t * frame, size_t mem_buf_len);
+    int STDCALL queue_tx_frame(void * notification_id, uint32_t notification_flag, uint8_t * frame, size_t mem_buf_len);
 
     ///
     /// Set a waiting flag for the command sent.
@@ -76,7 +80,7 @@ public:
     ///
     /// Start point of the system process, which calls the thread initialization function.
     ///
-    int STDCALL process_start();
+    int STDCALL process_start(net_interface * netif, controller * controller_obj);
 
     ///
     /// End point of the system process, which terminates the threads.
@@ -84,12 +88,12 @@ public:
     int STDCALL process_close();
 
 private:
-    static system_layer2_multithreaded_callback * instance;
     struct epoll_priv;
     typedef int (*handler_fn)(struct epoll_priv * priv);
 
     struct epoll_priv
     {
+        system_layer2_multithreaded_callback *instance;
         int fd;
         handler_fn fn;
     };
@@ -110,7 +114,12 @@ private:
         TIME_PERIOD_25_MILLISECONDS = 25
     };
 
+    net_interface_imp * netif_obj_in_system;
+    controller_imp * controller_ref_in_system;
+
     pthread_t h_thread;
+
+    bool is_running;
 
     //int network_fd;
     int tx_pipe[2];

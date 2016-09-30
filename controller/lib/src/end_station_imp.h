@@ -38,6 +38,12 @@
 namespace avdecc_lib
 {
 class adp;
+class controller_imp;
+class net_interface_imp;
+class aecp_controller_state_machine;
+class acmp_controller_state_machine;
+class adp_discovery_state_machine;
+class system;
 
 class background_read_request
 {
@@ -63,6 +69,7 @@ private:
     std::list<background_read_request *> m_backbround_read_pending;  // Store a list of background reads
     std::list<background_read_request *> m_backbround_read_inflight; // Store a list of background reads that are inflight
 
+    controller_imp & m_controller_imp_ref;
     adp * adp_ref;                                        // ADP associated with the End Station
     std::vector<entity_descriptor_imp *> entity_desc_vec; // Store a list of ENTITY descriptor objects
 
@@ -73,7 +80,7 @@ private:
     bool desc_index_from_frame(uint16_t desc_type, void * frame, ssize_t read_desc_offset, uint16_t & desc_index);
 
 public:
-    end_station_imp(const uint8_t * frame, size_t frame_len);
+    end_station_imp(net_interface_imp * netif, controller_imp & controller_imp_ref, const uint8_t * frame, size_t frame_len);
     virtual ~end_station_imp();
 
     std::mutex locker;
@@ -98,6 +105,9 @@ public:
     uint64_t STDCALL mac();
     uint64_t STDCALL get_gptp_grandmaster_id();
     adp * get_adp();
+    aecp_controller_state_machine & get_aecp_controller_state_machine();
+    acmp_controller_state_machine & get_acmp_controller_state_machine();
+    adp_discovery_state_machine   & get_adp_discovery_state_machine();
     size_t STDCALL entity_desc_count();
     entity_descriptor * STDCALL get_entity_desc_by_index(size_t entity_desc_index);
     int STDCALL send_read_desc_cmd(void * notification_id, uint16_t desc_type, uint16_t desc_index);
@@ -134,6 +144,8 @@ public:
 
     int STDCALL send_deregister_unsolicited_cmd(void * notification_id);
     int proc_deregister_unsolicited_resp(void *& notification_id, const uint8_t * frame, size_t frame_len, int & status);
+
+    size_t STDCALL system_queue_tx(void * notification_id, uint32_t notification_flag, uint8_t * frame, size_t frame_len);
 
 private:
     ///

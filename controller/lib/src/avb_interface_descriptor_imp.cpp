@@ -37,7 +37,7 @@
 #include "avb_interface_descriptor_imp.h"
 #include "aecp_controller_state_machine.h"
 #include "adp.h"
-#include "system_tx_queue.h"
+#include "system.h"
 
 namespace avdecc_lib
 {
@@ -82,7 +82,7 @@ int STDCALL avb_interface_descriptor_imp::send_get_counters_cmd(void * notificat
     aem_cmd_get_counters.descriptor_index = descriptor_index();
 
     /******************************* Fill frame payload with AECP data and send the frame **************************/
-    aecp_controller_state_machine_ref->ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
                                                         ETHER_HDR_SIZE + JDKSAVDECC_AEM_COMMAND_GET_COUNTERS_COMMAND_LEN);
     aem_cmd_get_counters_returned = jdksavdecc_aem_command_get_counters_write(&aem_cmd_get_counters,
                                                                               cmd_frame.payload,
@@ -96,7 +96,7 @@ int STDCALL avb_interface_descriptor_imp::send_get_counters_cmd(void * notificat
         return -1;
     }
 
-    aecp_controller_state_machine_ref->common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
                                                        &cmd_frame,
                                                        base_end_station_imp_ref->entity_id(),
                                                        JDKSAVDECC_AEM_COMMAND_GET_COUNTERS_COMMAND_LEN -
@@ -134,7 +134,7 @@ int avb_interface_descriptor_imp::proc_get_counters_resp(void *& notification_id
     status = avb_interface_counters_resp.aem_header.aecpdu_header.header.status;
     u_field = avb_interface_counters_resp.aem_header.command_type >> 15 & 0x01; // u_field = the msb of the uint16_t command_type
 
-    aecp_controller_state_machine_ref->update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
+    base_end_station_imp_ref->get_aecp_controller_state_machine().update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
 
     return 0;
 }
@@ -155,7 +155,7 @@ int STDCALL avb_interface_descriptor_imp::send_get_avb_info_cmd(void * notificat
     aem_cmd_get_avb_info.descriptor_index = descriptor_index();
 
     /******************************* Fill frame payload with AECP data and send the frame **************************/
-    aecp_controller_state_machine_ref->ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().ether_frame_init(base_end_station_imp_ref->mac(), &cmd_frame,
                                                         ETHER_HDR_SIZE + JDKSAVDECC_AEM_COMMAND_GET_AVB_INFO_COMMAND_LEN);
     aem_cmd_get_avb_info_returned = jdksavdecc_aem_command_get_avb_info_write(&aem_cmd_get_avb_info,
                                                                               cmd_frame.payload,
@@ -169,7 +169,7 @@ int STDCALL avb_interface_descriptor_imp::send_get_avb_info_cmd(void * notificat
         return -1;
     }
 
-    aecp_controller_state_machine_ref->common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
+    base_end_station_imp_ref->get_aecp_controller_state_machine().common_hdr_init(JDKSAVDECC_AECP_MESSAGE_TYPE_AEM_COMMAND,
                                                        &cmd_frame,
                                                        base_end_station_imp_ref->entity_id(),
                                                        JDKSAVDECC_AEM_COMMAND_GET_AVB_INFO_COMMAND_LEN -
@@ -208,7 +208,7 @@ int avb_interface_descriptor_imp::proc_get_avb_info_resp(void *& notification_id
     status = avb_interface_info_resp.aem_header.aecpdu_header.header.status;
     u_field = avb_interface_info_resp.aem_header.command_type >> 15 & 0x01; // u_field = the msb of the uint16_t command_type
 
-    aecp_controller_state_machine_ref->update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
+    base_end_station_imp_ref->get_aecp_controller_state_machine().update_inflight_for_rcvd_resp(notification_id, msg_type, u_field, &cmd_frame);
 
     return 0;
 }

@@ -57,6 +57,11 @@ protected:
     uint16_t desc_type;
     uint16_t desc_index;
 
+    ///
+    /// Send a message to the system class.
+    ///
+    size_t STDCALL system_queue_tx(void * notification_id, uint32_t notification_flag, uint8_t * frame, size_t frame_len);
+
 public:
     descriptor_base_imp(end_station_imp * base, const uint8_t * frame, size_t size, ssize_t pos);
     virtual ~descriptor_base_imp();

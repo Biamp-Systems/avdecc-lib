@@ -38,7 +38,8 @@
 
 namespace avdecc_lib
 {
-adp::adp(const uint8_t * frame, size_t frame_len)
+adp::adp(net_interface_imp * netif, const uint8_t * frame, size_t frame_len)
+: net_interface_ref(netif)
 {
     adp_frame = (uint8_t *)malloc(frame_len * sizeof(uint8_t));
     memcpy(adp_frame, frame, frame_len);

@@ -34,7 +34,7 @@
 #include "log_imp.h"
 #include "adp.h"
 #include "end_station_imp.h"
-#include "system_tx_queue.h"
+#include "system.h"
 #include "acmp_controller_state_machine.h"
 #include "aecp_controller_state_machine.h"
 #include "stream_output_descriptor_response_imp.h"

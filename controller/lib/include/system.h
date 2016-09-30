@@ -30,6 +30,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
 #include "avdecc-lib_build.h"
 
 namespace avdecc_lib
@@ -54,6 +55,11 @@ public:
     AVDECC_CONTROLLER_LIB32_API virtual void STDCALL destroy() = 0;
 
     ///
+    /// Queue a message into the system class.
+    ///
+    AVDECC_CONTROLLER_LIB32_API virtual int STDCALL queue_tx_frame(void * notification_id, uint32_t notification_flag, uint8_t * frame, size_t mem_buf_len) = 0;
+
+    ///
     /// Set a waiting flag for the command to be sent.
     ///
     AVDECC_CONTROLLER_LIB32_API virtual int STDCALL set_wait_for_next_cmd(void *) = 0;
@@ -66,7 +72,7 @@ public:
     ///
     /// Start point of the system process, which calls the thread initialization function.
     ///
-    AVDECC_CONTROLLER_LIB32_API virtual int STDCALL process_start() = 0;
+    AVDECC_CONTROLLER_LIB32_API virtual int STDCALL process_start(net_interface * netif, controller * controller_obj) = 0;
 
     ///
     /// End point of the system process, which terminates the threads.
@@ -81,5 +87,5 @@ public:
 // \param netif A network interface object created in the application level using the public network interface API provided.
 // \param controller_obj An AVDECC Controller object created in the application level using the public Controller API provided.
 //
-extern "C" AVDECC_CONTROLLER_LIB32_API system * STDCALL create_system(system::system_type type, net_interface * netif, controller * controller_obj);
+extern "C" AVDECC_CONTROLLER_LIB32_API system * STDCALL create_system(system::system_type type);
 }

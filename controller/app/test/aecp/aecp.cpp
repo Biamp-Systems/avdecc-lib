@@ -37,7 +37,8 @@
 
 namespace avdecc_lib
 {
-    aecp::aecp(uint8_t *frame, size_t pos, size_t frame_len)
+    aecp::aecp(net_interface_imp * netif, uint8_t *frame, size_t pos, size_t frame_len)
+    : net_interface_ref(netif)
     {
         aecp_frame = (uint8_t *)malloc(frame_len * sizeof(uint8_t));
         memcpy(aecp_frame, frame, frame_len);
