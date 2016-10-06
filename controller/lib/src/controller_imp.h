@@ -50,12 +50,12 @@ private:
     system & m_system_ref;
     net_interface_imp * net_interface_ref;
 
-    std::auto_ptr<notification_imp> notification_imp_ref;
-    std::auto_ptr<notification_acmp_imp> notification_acmp_imp_ref;
-    std::auto_ptr<aecp_controller_state_machine> aecp_controller_state_machine_ref;
-    std::auto_ptr<acmp_controller_state_machine> acmp_controller_state_machine_ref;
-    std::auto_ptr<adp_discovery_state_machine> adp_discovery_state_machine_ref;
-    std::auto_ptr<end_stations> end_station_array;
+    std::unique_ptr<notification_imp> notification_imp_ref;
+    std::unique_ptr<notification_acmp_imp> notification_acmp_imp_ref;
+    std::unique_ptr<aecp_controller_state_machine> aecp_controller_state_machine_ref;
+    std::unique_ptr<acmp_controller_state_machine> acmp_controller_state_machine_ref;
+    std::unique_ptr<adp_discovery_state_machine> adp_discovery_state_machine_ref;
+    std::unique_ptr<end_stations> end_station_array;
 
     uint32_t m_entity_capabilities_flags;
     uint32_t m_talker_capabilities_flags;
