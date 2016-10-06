@@ -60,8 +60,8 @@ private:
     uint16_t selected_entity_index; // The controller-selected entity index
     uint16_t selected_config_index; // The controller-selected configuraition descriptor index
 
-    std::list<background_read_request *> m_backbround_read_pending;  // Store a list of background reads
-    std::list<background_read_request *> m_backbround_read_inflight; // Store a list of background reads that are inflight
+    std::list<background_read_request *> m_background_read_pending;  // Store a list of background reads
+    std::list<background_read_request *> m_background_read_inflight; // Store a list of background reads that are inflight
 
     adp * adp_ref;                                        // ADP associated with the End Station
     std::vector<entity_descriptor_imp *> entity_desc_vec; // Store a list of ENTITY descriptor objects
