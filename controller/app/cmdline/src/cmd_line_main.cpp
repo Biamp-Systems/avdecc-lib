@@ -125,7 +125,7 @@ extern "C" void acmp_notification_callback(void * user_obj, int32_t notification
             cmd_status_name = avdecc_lib::utility::acmp_cmd_status_value_to_name(cmd_status);
         }
 
-        printf("\n[NOTIFICATION] (%s, %s, 0x%llx, %d, 0x%llx, %d, %s, %p)\n",
+        printf("\n[NOTIFICATION] (%s, %s, 0x%lx, %d, 0x%lx, %d, %s, %p)\n",
                avdecc_lib::utility::acmp_notification_value_to_name(notification_type),
                cmd_name,
                talker_entity_id,
