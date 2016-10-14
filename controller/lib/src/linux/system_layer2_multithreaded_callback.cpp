@@ -354,16 +354,10 @@ void * system_layer2_multithreaded_callback::thread_fn(void * param)
 
 int STDCALL system_layer2_multithreaded_callback::process_start(net_interface * netif, controller * controller_obj)
 {
+    int rc;
+
     netif_obj_in_system = dynamic_cast<net_interface_imp *>(netif);
     controller_ref_in_system = dynamic_cast<controller_imp *>(controller_obj);
-
-    if (!controller_ref_in_system)
-    {
-        log_imp_ref->post_log_msg(LOGGING_LEVEL_ERROR, "Dynamic cast from base controller to derived controller_imp error");
-    }
-
-
-    int rc;
 
     rc = pthread_create(&h_thread, NULL, &system_layer2_multithreaded_callback::thread_fn, (void *)this);
     if (rc)
