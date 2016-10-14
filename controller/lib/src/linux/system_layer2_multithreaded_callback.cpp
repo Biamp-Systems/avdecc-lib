@@ -97,12 +97,15 @@ system_layer2_multithreaded_callback::~system_layer2_multithreaded_callback()
 
 void STDCALL system_layer2_multithreaded_callback::destroy()
 {
-    is_running = false;
-
-    // Wait for controller to have finished
-    if (sem_wait(shutdown_sem) != 0)
+    if (is_running)
     {
-        perror("sem_wait");
+        is_running = false;
+
+        // Wait for controller to have finished
+        if (sem_wait(shutdown_sem) != 0)
+        {
+            perror("sem_wait");
+        }
     }
 
     delete this;
