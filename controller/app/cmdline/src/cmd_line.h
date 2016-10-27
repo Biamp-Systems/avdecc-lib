@@ -59,6 +59,7 @@ public:
     {
         // Use printf as cout seems to still be interleaved
         printf("%s", buffer.str().c_str());
+        fflush(stdout);
     }
 
 private:
@@ -439,6 +440,11 @@ private:
     ///
     int cmd_set_path(int total_matched, std::vector<cli_argument *> args);
 
+    ///
+    /// Get the connection status of an end station
+    ///
+    int cmd_get_connection_status(int total_matched, std::vector<cli_argument *> args);
+    
     ///
     /// Clear the screen.
     ///

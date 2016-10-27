@@ -153,17 +153,55 @@ int cmd_line::print_interfaces_and_select(char * interface)
 
     for (uint32_t i = 1; i < netif->devs_count() + 1; i++)
     {
-        char * dev_desc = netif->get_dev_desc_by_index(i - 1);
+        size_t dev_index = i - 1;
+        char * dev_desc = netif->get_dev_desc_by_index(dev_index);
         if (!interface)
         {
-            printf("%d (%s)\n", i, dev_desc);
+            printf("%d (%s)", i, dev_desc);
+            
+            uint64_t dev_mac = netif->get_dev_mac_addr_by_index(dev_index);
+            if (dev_mac)
+            {
+                avdecc_lib::utility::MacAddr mac(dev_mac);
+                char mac_str[20];
+                mac.tostring(mac_str);
+                printf(" (%s)", mac_str);
+            }
+            
+            size_t ip_addr_count = netif->device_ip_address_count(dev_index);
+            if (ip_addr_count > 0)
+            {
+                for(size_t ip_index = 0; ip_index < ip_addr_count; ip_index++)
+                {
+                    const char * dev_ip = netif->get_dev_ip_address_by_index(dev_index, ip_index);
+                    if (dev_ip)
+                        printf(" <%s>", dev_ip);
+                }
+            }
+            printf("\n");
         }
         else
         {
-            if (strcmp(dev_desc, interface) == 0)
+            // try to find the selected interface by ip address
+            if (netif->does_interface_have_ip_address(dev_index, interface))
             {
                 interface_num = i;
                 break;
+            }
+
+            // try to find the selected interface by MAC address
+            avdecc_lib::utility::MacAddr mac(interface);
+            if (mac.fromstring(interface)) // valid format? (xx:xx:...)
+            {
+                uint64_t mac_val = mac.tovalue();
+                if (mac_val)
+                {
+                    if (netif->does_interface_have_mac_address(dev_index, mac_val))
+                    {
+                        interface_num = i;
+                        break;
+                    }
+                }
             }
         }
     }
@@ -173,7 +211,26 @@ int cmd_line::print_interfaces_and_select(char * interface)
         atomic_cout << "Enter the interface number (1-" << std::dec << netif->devs_count() << "): ";
         std::cin >> interface_num;
     }
+    else
+    {
+        // if the interface was not found by IP Address or MAC address...
+        if (interface_num == -1)
+        {
+            // treat the selected interface as an index
+            char * tmp;
+            long if_num = strtol(interface, &tmp, 10);
+            if (interface != tmp)
+                interface_num = if_num;
+        }
+    }
 
+    if (interface_num == -1 ||
+        interface_num > netif->devs_count() + 1)
+    {
+        printf("Invalid Interface: (%s).  Exiting...\n", interface);
+        exit(EXIT_FAILURE);
+    }
+    
     netif->select_interface_by_num(interface_num);
 
     return 0;
@@ -519,6 +576,16 @@ void cmd_line::cmd_line_commands_init()
     cli_command * get_cmd = new cli_command();
     commands.add_sub_command("get", get_cmd);
 
+    // get connection status
+    cli_command * get_connection_status_cmd = new cli_command();
+    get_cmd->add_sub_command("connection_status", get_connection_status_cmd);
+    
+    cli_command_format * get_connection_status_fmt = new cli_command_format(
+        "Get the connection status of an end station.",
+        &cmd_line::cmd_get_connection_status);
+    get_connection_status_fmt->add_argument(new cli_argument_string(this, "e_g", "the end station - by GUID or index"));
+    get_connection_status_cmd->add_format(get_connection_status_fmt);
+    
     // get name
     cli_command * get_name_cmd = new cli_command();
     get_cmd->add_sub_command("name", get_name_cmd);
@@ -3762,10 +3829,24 @@ int cmd_line::cmd_set_stream_info(int total_matched, std::vector<cli_argument *>
                 return 0;
             }
         }
+        else if (stream_info_field == "msrp_accumulated_latency")
+        {
+            uint32_t msrp_accumulated_latency = (uint32_t)strtoul(new_stream_info_field_value.c_str(), NULL, 0);
+            intptr_t cmd_notification_id = get_next_notification_id();
+            sys->set_wait_for_next_cmd((void *)cmd_notification_id);
+            avdecc_lib::stream_output_descriptor * stream_output_desc_ref = configuration->get_stream_output_desc_by_index(desc_index);
+            stream_output_desc_ref->send_set_stream_info_msrp_accumulated_latency_cmd((void *)cmd_notification_id, msrp_accumulated_latency);
+            int status = sys->get_last_resp_status();
+            if (status != avdecc_lib::AEM_STATUS_SUCCESS)
+            {
+                atomic_cout << "cmd_set_stream_info error" << std::endl;
+                return 0;
+            }
+        }
         else
         {
             atomic_cout << "Supported fields are:" << std::endl
-                        << "stream_vlan_id" << std::endl;
+                        << "stream_vlan_id, msrp_accumulated_latency" << std::endl;
         }
     }
     else
@@ -4132,6 +4213,35 @@ int cmd_line::cmd_get_group_name(int total_matched, std::vector<cli_argument *> 
     {
         atomic_cout << "cmd_get_name failed with AEM status: " << avdecc_lib::utility::aem_cmd_status_value_to_name(status) << std::endl;
     }
+
+    return 0;
+}
+
+int cmd_line::cmd_get_connection_status(int total_matched, std::vector<cli_argument *> args)
+{
+    std::string end_station = args[0]->get_value_str();
+    uint32_t end_station_index;
+    if (get_end_station_index(end_station, end_station_index))
+    {
+        avdecc_lib::end_station * end_station = controller_obj->get_end_station_by_index(end_station_index);
+        avdecc_lib::entity_descriptor * entity;
+        avdecc_lib::configuration_descriptor * configuration;
+        if (get_current_entity_and_descriptor(end_station, &entity, &configuration))
+        {
+            atomic_cout << "End Station " << end_station << " is not fully enumerated." << std::endl;
+            return 0;
+        }
+        
+        avdecc_lib::entity_descriptor_response * entity_desc_resp = entity->get_entity_response();
+        if (end_station->get_connection_status() == 'C')
+            atomic_cout << "End Station " << entity_desc_resp->entity_name() << " is connected." << std::endl;
+        else
+            atomic_cout << "End Station " << entity_desc_resp->entity_name() << " is disconnected." << std::endl;
+
+        delete entity_desc_resp;
+    }
+    else
+        atomic_cout << "End Station " << end_station << " is not found." << std::endl;
 
     return 0;
 }
